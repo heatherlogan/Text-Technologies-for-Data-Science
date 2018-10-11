@@ -67,6 +67,7 @@ def getand(lst1, lst2):
                 if key in item2.keys():
                     #found
                     found_positions.append(key)
+    print(found_positions)
     return found_positions
 
 
@@ -89,7 +90,6 @@ def getnot(lst):
         for key in item.keys():
             doclist.append(key)
     return [n for n in ([int(x) for x in all_docs]) if n not in doclist]
-
 
 def printresults(queryno, results):
     f =  open('results.boolean.txt', 'w')
@@ -131,11 +131,12 @@ def boolean_and(query):
     term1 = query[:idx1].strip()
     term2 = query[idx1+3:].strip()
 
+
+
     if term1.startswith('"') and term1.endswith('"'):
         term1_positions = phrasesearch(term1)
     else:
         term1_positions = getpositions(preprocess_term(term1))
-
     if term2.startswith('"') and term2.endswith('"'):
         term2_positions = phrasesearch(term2)
     else:
@@ -153,7 +154,6 @@ def boolean_or(query):
         term1_positions = phrasesearch(term1)
     else:
         term1_positions = getpositions(preprocess_term(term1))
-
     if term2.startswith('"') and term2.endswith('"'):
         term2_positions = phrasesearch(term2)
     else:
@@ -167,7 +167,9 @@ def parsequery(queryno, query):
     bool_ops = ['AND', 'OR', 'NOT']
 
     if 'AND' in query:
+        print(query)
         results = boolean_and(query)
+
     elif 'OR' in query:
         results = boolean_or(query)
 
@@ -193,10 +195,7 @@ def parsequery(queryno, query):
 
 if __name__=='__main__':
 
-    #load queries
     for query in query_file:
         queryno = int(query.split()[0])
         query = query.lstrip(digits).strip()
         r = parsequery(queryno, query)
-        r = sorted(r)
-        printresults(queryno, r)
