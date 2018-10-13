@@ -118,6 +118,7 @@ def booleansearch(querynumber, query):
 
     query = query.split(" ")
     results = []
+    # boolean searches
     if 'AND' in query:
         results = getand(getpositions(query[0]), getpositions(query[2]))
     elif 'OR' in query:
@@ -125,7 +126,8 @@ def booleansearch(querynumber, query):
     elif 'NOT' in query:
         results = getnot(getpositions(query[1]))
 
-    elif len(query) == 1:   #single phrase search
+    # single phrase search
+    elif len(query) == 1:   
         results = []
         for item in getpositions(query[0]):
             for key in item.keys():

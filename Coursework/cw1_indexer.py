@@ -36,6 +36,7 @@ def split_file():
 # saves a preprocessed.txt file and keeps a list of dictionary elements r
 # presenting documents to work on when  building indewx
 
+
 def preprocess():
 
     pp_file = []

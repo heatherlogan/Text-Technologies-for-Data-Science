@@ -57,38 +57,10 @@ def getpositions(term):
     return position_list
 
 
-# returns intersection positions for two lists
-
-def getand(lst1, lst2):
-    found_positions = []
-    for item in lst1:
-        for key in item.keys():
-            for item2 in lst2:
-                if key in item2.keys():
-                    #found
-                    found_positions.append(key)
-    return found_positions
-
-
-# returns union
-def getor(lst1, lst2):
-    found_positions = []
-    for item in lst1:
-        for key in item.keys():
-            found_positions.append(key)
-    for item in lst2:
-        for key in item.keys():
-            found_positions.append(key)
-    return list(set(sorted(found_positions)))
-
-
 def getnot(lst):
     all_docs = sorted(list(set(docnumbers)))
-    doclist = []
-    for item in lst:
-        for key in item.keys():
-            doclist.append(key)
-    return [n for n in ([int(x) for x in all_docs]) if n not in doclist]
+    return [n for n in ([int(x) for x in all_docs]) if n not in lst]
+
 
 def printresults(queryno, results):
     f =  open('results.boolean.txt', 'w')
@@ -130,6 +102,7 @@ def proximitysearch(query):
     results = phrasesearch(int(i), query)
     return list(set(get_docs(results)))
 
+
 def get_docs(position_list):
     docs = []
     for position in position_list:
@@ -138,52 +111,58 @@ def get_docs(position_list):
     return docs
 
 
-def boolean_and(query):
-    idx1 = query.index('AND')
-    term1 = query[:idx1].strip()
-    term2 = query[idx1+3:].strip()
+def boolean_search(query):
+
+    results = []
+
+    if 'AND NOT' in query:
+        idx1 = query.index('AND')
+        term1 = query[:idx1].strip()
+        term2 = query[idx1 + 7:].strip()
+    elif 'OR NOT' in query:
+        idx1 = query.index('OR')
+        term1 = query[:idx1].strip()
+        term2 = query[idx1 + 6:].strip()
+    elif 'AND' in query:
+        idx1 = query.index('AND')
+        term1 = query[:idx1].strip()
+        term2 = query[idx1 + 3:].strip()
+    elif 'OR' in query:
+        idx1 = query.index('OR')
+        term1 = query[:idx1].strip()
+        term2 = query[idx1 + 2:].strip()
 
     if term1.startswith('"') and term1.endswith('"'):
         term1_positions = phrasesearch(1, term1)
     else:
         term1_positions = getpositions(preprocess_term(term1))
-
     if term2.startswith('"') and term2.endswith('"'):
         term2_positions = phrasesearch(1, term2)
     else:
         term2_positions = getpositions(preprocess_term(term2))
 
-    print(term1_positions)
-    print(term2_positions)
+    term1_positions = get_docs(term1_positions)
+    term2_positions = get_docs(term2_positions)
 
-    return list(set(term1_positions) & set((term2_positions)))
+    if 'NOT' in query:
+        term2_positions = getnot(term2_positions)
 
+    if 'AND' in query:
+        results = list(set(term1_positions) & set(term2_positions))
 
-def boolean_or(query):
+    if 'OR' in query:
+        results = list(set(term1_positions) | set(term2_positions))
 
-    idx1 = query.index('OR')
-    term1 = query[:idx1].strip()
-    term2 = query[idx1 + 2:].strip()
-    if term1.startswith('"') and term1.endswith('"'):
-        term1_positions = phrasesearch(1, term1)
-    else:
-        term1_positions = getpositions(preprocess_term(term1))
-    if term2.startswith('"') and term2.endswith('"'):
-        term2_positions = phrasesearch(1, term2)
-    else:
-        term2_positions = getpositions(preprocess_term(term2))
+    return results
 
-    return list(set(get_docs(term1_positions)) | set(get_docs(term2_positions)))
 
 # query in list format, preprocesses
 def parsequery(queryno, query):
     results = []    # list of positions
     bool_ops = ['AND', 'OR', 'NOT']
 
-    if 'AND' in query:
-        results = boolean_and(query)
-    elif 'OR' in query:
-        results = boolean_or(query)
+    if 'AND' in query or 'OR' in query:
+        results = boolean_search(query)
 
     elif query.startswith('#') and query.endswith(")"):
         results = proximitysearch(query)
@@ -209,4 +188,4 @@ if __name__=='__main__':
         queryno = int(query.split()[0])
         query = query.lstrip(digits).strip()
         results = parsequery(queryno, query)
-        printresults(queryno, results)
+        print(queryno, results)
