@@ -62,12 +62,12 @@ def getnot(lst):
     return [n for n in ([int(x) for x in all_docs]) if n not in lst]
 
 
-def printresults(queryno, results):
-    f =  open('results.boolean.txt', 'w')
-    if len(results) > 0:
-        for documentnumber in results:
-            print("{} 0 {} 0 1 0".format(queryno, documentnumber))
-            f.write("{} 0 {} 0 1 0\n".format(queryno, documentnumber))
+def get_docs(position_list):
+    docs = []
+    for position in position_list:
+        for key in position.keys():
+            docs.append(key)
+    return docs
 
 
 def phrasesearch(i, phrase):
@@ -103,34 +103,25 @@ def proximitysearch(query):
     return list(set(get_docs(results)))
 
 
-def get_docs(position_list):
-    docs = []
-    for position in position_list:
-        for key in position.keys():
-            docs.append(key)
-    return docs
-
-
 def boolean_search(query):
 
     results = []
 
     if 'AND NOT' in query:
         idx1 = query.index('AND')
-        term1 = query[:idx1].strip()
-        term2 = query[idx1 + 7:].strip()
+        idx2 = idx1 + 7
     elif 'OR NOT' in query:
         idx1 = query.index('OR')
-        term1 = query[:idx1].strip()
-        term2 = query[idx1 + 6:].strip()
+        idx2 = idx1 + 6
     elif 'AND' in query:
         idx1 = query.index('AND')
-        term1 = query[:idx1].strip()
-        term2 = query[idx1 + 3:].strip()
+        idx2 = idx1 + 3
     elif 'OR' in query:
         idx1 = query.index('OR')
-        term1 = query[:idx1].strip()
-        term2 = query[idx1 + 2:].strip()
+        idx2 = idx1 + 2
+
+    term1 = query[:idx1].strip()
+    term2 = query[idx2:].strip()
 
     if term1.startswith('"') and term1.endswith('"'):
         term1_positions = phrasesearch(1, term1)
@@ -180,6 +171,14 @@ def parsequery(queryno, query):
             for key in item.keys():
                 results.append(key)
     return results
+
+
+def printresults(queryno, results):
+    f =  open('results.boolean.txt', 'w')
+    if len(results) > 0:
+        for documentnumber in results:
+            print("{} 0 {} 0 1 0".format(queryno, documentnumber))
+            f.write("{} 0 {} 0 1 0\n".format(queryno, documentnumber))
 
 
 if __name__=='__main__':
