@@ -4,13 +4,15 @@ import re
 import os
 import itertools
 from stemming.porter2 import stem
-from nltk.corpus import stopwords
 
 
 filename = sys.argv[1]
 file = open(filename, 'r').readlines()
 all_files = []
-stopwords = stopwords.words('english')
+stopwords_file = open('stopwordsfile.txt', 'r').readlines()
+stopwords = []
+for word in stopwords_file:
+    stopwords.append(word.strip())
 stopwords.append('id')
 stopwords.append('text')
 stopwords.append('headline')
@@ -56,7 +58,6 @@ def preprocess():
         for word in tokenizedline:
             word = word.lower()
             if word not in stopwords:
-                print(word)
                 processed_text.append(stem(word))
 
         if 'headlin' in processed_text:
@@ -139,7 +140,3 @@ if __name__=='__main__':
     terms = get_unique_terms()
     inverted_index = build_index(preproccessed_file, terms)
     print_and_save(inverted_index)
-
-
-
-

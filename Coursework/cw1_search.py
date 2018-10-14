@@ -1,13 +1,24 @@
 import os
 import sys
 import re
-from collections import defaultdict
+from itertools import chain
+
+import numpy as np
 from stemming.porter2 import stem
 from string import digits
 
 indexed_file = open('indexed.txt', 'r').readlines()
 query_file = open('queries.txt', 'r').readlines()
 docnumbers = []
+stopwords_file = open('stopwordsfile.txt', 'r').readlines()
+stopwords = []
+for word in stopwords_file:
+    stopwords.append(word.strip())
+stopwords.append('id')
+stopwords.append('text')
+stopwords.append('headline')
+stopwords = set(stopwords)
+
 
 #loads indexed file back into a list of dictionary items [{term: {document:[positions]}}...]
 
@@ -42,6 +53,16 @@ def format_txt_file():
 # load index
 inverted_index = format_txt_file()
 
+
+def preprocess_query(query):
+    pp_query = []
+
+    query = query.split(' ')
+    for term in query:
+        if term not in stopwords:
+            term = re.sub(r'\W+', '', stem(term.lower()))
+            pp_query.append(term)
+    return pp_query
 
 def preprocess_term(term):
     return re.sub(r'\W+', '', stem(term.lower()))
@@ -147,10 +168,67 @@ def boolean_search(query):
     return results
 
 
+def rankedir_search(query):
+    results = []
+    query = query.split(' ')
+    N = len(list(set(docnumbers)))
+    tfidfs = {}
+
+    def tfidf(tf, df):
+        return (1 + np.log10(tf)) * (np.log10(N/df))
+
+    for term in query:
+        term = preprocess_term(term)
+        positions = getpositions(term)
+        docfreq = len(positions)
+
+        for position in positions:
+            for doc in position:
+                termfreq = len(position[doc])
+                t = tfidf(termfreq, docfreq)
+
+                if doc not in tfidfs.keys():
+                    tfidfs[doc] = t
+                else:
+                    newval = tfidfs[doc].__add__(t)
+                    tfidfs[doc] = newval
+
+    return tfidfs
+
+
+def print_results(queryno, results):
+
+    query_results = []
+    if len(results) > 0:
+        for documentnumber in results:
+            output_string = "{} 0 {} 0 1 0\n".format(queryno, documentnumber)
+            query_results.append(output_string)
+            print(output)
+    return query_results
+
+def print_results_IR(queryno, results):
+
+    query_results = []
+    results_c = results.copy()
+    for doc, score in results_c.items():
+        if score == 0.0:
+            results.pop(doc)
+    results = (sorted(results.items(), key=lambda kv: kv[1], reverse=True))
+    for item in results:
+        doc, score = item
+        output = "{} 0 {} 0 {} 0\n".format(queryno, doc, round(score, 3))
+        query_results.append(output)
+        print(output)
+
+    return query_results
+
+
 # query in list format, preprocesses
 def parsequery(queryno, query):
+
     results = []    # list of positions
-    bool_ops = ['AND', 'OR', 'NOT']
+    querytype = "not_ir"
+    results_string = []
 
     if 'AND' in query or 'OR' in query:
         results = boolean_search(query)
@@ -166,25 +244,37 @@ def parsequery(queryno, query):
                 t.append(key)
         results.extend(list(set(t)))
 
-    elif len(query.split(' '))>0:
+    elif len(query.split(' ')) == 1:
         for item in getpositions(query):
             for key in item.keys():
                 results.append(key)
-    return results
+    else:
+        querytype = "IR"
+        results = rankedir_search(query)
 
+    if querytype == "IR":
+        query = preprocess_query(query)
+        results_string.append(print_results_IR(queryno, results))
+    else:
+        results_string.append(print_results(queryno, results))
 
-def printresults(queryno, results):
-    f =  open('results.boolean.txt', 'w')
-    if len(results) > 0:
-        for documentnumber in results:
-            print("{} 0 {} 0 1 0".format(queryno, documentnumber))
-            f.write("{} 0 {} 0 1 0\n".format(queryno, documentnumber))
-
+    return list(chain.from_iterable(results_string))
 
 if __name__=='__main__':
+
+    output = []
 
     for query in query_file:
         queryno = int(query.split()[0])
         query = query.lstrip(digits).strip()
-        results = parsequery(queryno, query)
-        print(queryno, results)
+        results_string = parsequery(queryno, query)
+        if len(results_string)>0:
+            output.append(results_string)
+
+    output = list(chain.from_iterable(output))
+    print(output)
+    f = open('results.ranked.txt', 'w')
+
+    for line in output:
+        f.write(line)
+    f.close()
