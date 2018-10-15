@@ -8,7 +8,7 @@ from stemming.porter2 import stem
 from string import digits
 
 indexed_file = open('indexed.txt', 'r').readlines()
-query_file = open('queries.txt', 'r').readlines()
+query_file = open(sys.argv[1], 'r').readlines()
 docnumbers = []
 stopwords_file = open('stopwordsfile.txt', 'r').readlines()
 stopwords = []
@@ -202,7 +202,6 @@ def print_results(queryno, results):
         for documentnumber in results:
             output_string = "{} 0 {} 0 1 0".format(queryno, documentnumber)
             query_results.append(output_string)
-            print(output)
     return query_results
 
 def print_results_IR(queryno, results):
@@ -217,7 +216,6 @@ def print_results_IR(queryno, results):
         doc, score = item
         output = "{} 0 {} 0 {} 0".format(queryno, doc, round(score, 3))
         query_results.append(output)
-        print(output)
 
     return query_results
 
@@ -258,6 +256,7 @@ def parsequery(queryno, query):
         results_string.append(print_results(queryno, results))
 
     return list(chain.from_iterable(results_string))
+
 
 if __name__=='__main__':
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import sys
 import re
-import os
-import itertools
 from stemming.porter2 import stem
 
 
@@ -20,7 +18,6 @@ stopwords = set(stopwords)
 
 # returns a list of dictionary objects which are the original files by {doc number: text}
 # and writes the preprocessed text to a txt file
-
 
 def split_file():
     file_pos = []
@@ -41,10 +38,9 @@ def split_file():
 
 def preprocess():
 
-    pp_file = []
-
     print("Beginning preprocess")
     f = open("preprocessed.txt", 'w')
+    pp_file = []
 
     for document in split_file():
         docnumber = re.sub("[^0-9]", '', document[0])
