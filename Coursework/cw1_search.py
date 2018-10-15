@@ -192,7 +192,6 @@ def rankedir_search(query):
                 else:
                     newval = tfidfs[doc].__add__(t)
                     tfidfs[doc] = newval
-
     return tfidfs
 
 
@@ -201,7 +200,7 @@ def print_results(queryno, results):
     query_results = []
     if len(results) > 0:
         for documentnumber in results:
-            output_string = "{} 0 {} 0 1 0\n".format(queryno, documentnumber)
+            output_string = "{} 0 {} 0 1 0".format(queryno, documentnumber)
             query_results.append(output_string)
             print(output)
     return query_results
@@ -216,7 +215,7 @@ def print_results_IR(queryno, results):
     results = (sorted(results.items(), key=lambda kv: kv[1], reverse=True))
     for item in results:
         doc, score = item
-        output = "{} 0 {} 0 {} 0\n".format(queryno, doc, round(score, 3))
+        output = "{} 0 {} 0 {} 0".format(queryno, doc, round(score, 3))
         query_results.append(output)
         print(output)
 
@@ -268,13 +267,16 @@ if __name__=='__main__':
         queryno = int(query.split()[0])
         query = query.lstrip(digits).strip()
         results_string = parsequery(queryno, query)
+
+        if len(results_string) > 1000:
+            results_string = results_string[:1000]
+
         if len(results_string)>0:
             output.append(results_string)
 
     output = list(chain.from_iterable(output))
-    print(output)
     f = open('results.ranked.txt', 'w')
 
     for line in output:
-        f.write(line)
+        f.write(line + "\n")
     f.close()
